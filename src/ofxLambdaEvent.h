@@ -66,15 +66,31 @@ namespace ofxLambdaEvent {
     };
 }
 
+template <typename EventType>
+std::vector<ofEventListener> &getListeners() {
+    static std::vector<ofEventListener> listeners;
+    return listeners;
+}
+
 template <
     typename EventType,
     typename Lambda,
     typename info = ofxLambdaEvent::function_info<Lambda>
 >
-auto ofxAddLambdaListener(EventType &event,
+void ofxAddLambdaListener(EventType &event,
                           Lambda callback,
                           int priority = OF_EVENT_ORDER_AFTER_APP)
--> typename std::enable_if<info::is_function>::type
 {
-    ofAddListener(event, static_cast<typename info::result_type(*)(typename info::template argument_type<0> &)>(callback), priority);
+    ofEventListener listener = event.newListener(callback, priority);
+    getListeners<EventType>().push_back(std::move(listener));
+}
+
+template <typename EventType>
+void ofxRemoveLambdaListener(EventType &event) {
+    getListeners<EventType>().clear();
+}
+
+template <typename EventType>
+void ofxRemoveLambdaListener(EventType &event, ofEventListener &listener) {
+//    ofRemove(getListeners<EventType>(), listener)
 }
